@@ -1,0 +1,131 @@
+.active-services {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) 15px;
+  gap: 0;
+  padding: 14px;
+  height: 285px;
+  background:
+    linear-gradient(145deg, rgba(0, 0, 0, 0.38), rgba(0, 0, 0, 0.88)),
+    url("/assets/component-background.png") center / cover no-repeat;
+}
+
+.active-services header {
+  min-height: 54px;
+  padding: 0 8px 12px;
+}
+
+.active-services header div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--yellow);
+}
+
+.active-services h2 {
+  margin: 0;
+  color: white;
+  font-size: clamp(1.2rem, 1.55vw, 2rem);
+  font-style: italic;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.active-services h2 span {
+  color: var(--yellow);
+}
+
+.services-table {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.46);
+}
+
+.services-head,
+.services-row {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1.1fr 0.9fr;
+}
+
+.services-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(255, 196, 0, 0.72) rgba(255, 255, 255, 0.08);
+  scrollbar-width: thin;
+}
+
+.services-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.services-body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.services-body::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 196, 0, 0.72);
+}
+
+.services-head {
+  min-height: 46px;
+  align-items: center;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.services-row {
+  min-height: 60px;
+  align-items: center;
+  padding: 0 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.services-row > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.services-row > div > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.logo-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  min-width: 52px;
+  color: white;
+  font-size: 0.72rem;
+  font-style: italic;
+}
+
+.stage-cell {
+  color: white;
+}
+
+.stage-cell svg {
+  color: var(--yellow);
+}
+
+.services-head,
+.services-head span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.active-services-footer {
+  min-height: 15px;
+}

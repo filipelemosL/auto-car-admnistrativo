@@ -1,0 +1,227 @@
+.budget-workspace,
+.admin-panel {
+  display: grid;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+  padding: clamp(12px, 1.35vw, 22px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    linear-gradient(145deg, rgba(0, 0, 0, 0.38), rgba(0, 0, 0, 0.86)),
+    url("/assets/component-background.png") center / cover no-repeat;
+  scrollbar-color: rgba(255, 196, 0, 0.72) rgba(255, 255, 255, 0.08);
+  scrollbar-width: thin;
+}
+
+.budget-workspace::-webkit-scrollbar,
+.admin-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.budget-workspace::-webkit-scrollbar-track,
+.admin-panel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.budget-workspace::-webkit-scrollbar-thumb,
+.admin-panel::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 196, 0, 0.72);
+}
+
+.component-banner {
+  display: flex;
+  min-height: 82px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 2px solid var(--yellow);
+}
+
+.component-banner img {
+  width: min(140px, 24%);
+  min-width: 100px;
+}
+
+.banner-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--yellow);
+}
+
+.banner-title h2 {
+  margin: 0;
+  color: white;
+  font-size: clamp(1.55rem, 2.2vw, 2.55rem);
+  font-style: italic;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.banner-title span {
+  color: var(--yellow);
+}
+
+.form-block,
+.export-preview {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0)),
+    rgba(12, 12, 12, 0.78);
+}
+
+.form-block {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.block-title,
+.block-row,
+.client-picker,
+.recurring-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.block-title {
+  color: var(--yellow);
+  text-transform: uppercase;
+}
+
+.block-title strong {
+  font-size: 0.88rem;
+}
+
+.client-picker,
+.block-row,
+.recurring-row {
+  justify-content: space-between;
+}
+
+.client-picker label {
+  display: grid;
+  flex: 1;
+  gap: 9px;
+}
+
+.client-picker label span,
+.recurring-row p {
+  color: var(--muted);
+}
+
+.block-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.budget-item-table {
+  display: grid;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.budget-head,
+.budget-line {
+  display: grid;
+  grid-template-columns: minmax(210px, 2fr) minmax(126px, 0.9fr) 64px 108px 100px 90px 42px;
+  gap: 8px;
+  align-items: center;
+}
+
+.budget-head,
+.component-banner img + span,
+.export-preview span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.budget-head {
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.56);
+}
+
+.budget-line {
+  padding: 10px;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.segmented button {
+  background: transparent;
+  color: white;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.segmented .segment-active {
+  color: var(--yellow);
+  background: rgba(255, 196, 0, 0.16);
+}
+
+.budget-line strong {
+  color: var(--yellow);
+}
+
+.danger-icon,
+.whatsapp-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.danger-icon {
+  width: 38px;
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 51, 82, 0.48);
+  background: rgba(255, 51, 82, 0.12);
+  color: var(--red);
+}
+
+.wide-add-button {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.44);
+}
+
+.save-button {
+  width: 100%;
+  min-height: 50px;
+  border-color: transparent;
+  color: #111;
+  background: linear-gradient(180deg, var(--yellow-strong), #f4a900);
+  font-size: 0.95rem;
+}
+
+.export-preview {
+  display: grid;
+  gap: 8px;
+  max-height: 140px;
+  padding: 12px;
+  overflow: auto;
+}
+
+.export-preview pre {
+  margin: 0;
+  white-space: pre-wrap;
+  color: #d8d8d8;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.78rem;
+  line-height: 1.38;
+}

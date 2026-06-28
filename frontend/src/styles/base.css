@@ -1,0 +1,146 @@
+:root {
+  --font-family: "Segoe UI", "Arial", sans-serif;
+  --page-bg: #030303;
+  --panel: rgba(10, 10, 10, 0.86);
+  --panel-strong: rgba(16, 16, 16, 0.94);
+  --panel-soft: rgba(24, 24, 24, 0.76);
+  --line: rgba(255, 202, 15, 0.74);
+  --line-soft: rgba(255, 202, 15, 0.22);
+  --border: rgba(255, 255, 255, 0.14);
+  --text: #f7f7f7;
+  --muted: #a7a7a7;
+  --yellow: #ffc400;
+  --yellow-strong: #ffd318;
+  --green: #55d84b;
+  --blue: #48a7ff;
+  --cyan: #47d7cc;
+  --purple: #be72ff;
+  --red: #ff3352;
+  --radius: 14px;
+  --radius-small: 8px;
+  --shadow: 0 18px 52px rgba(0, 0, 0, 0.52);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  color: var(--text);
+  font-family: var(--font-family);
+  font-size: 14px;
+  background: var(--page-bg);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+select,
+input,
+textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(2, 2, 2, 0.78);
+  color: var(--text);
+  outline: 0;
+}
+
+select,
+input {
+  min-height: 38px;
+  padding: 0 11px;
+}
+
+textarea {
+  min-height: 46px;
+  padding: 10px;
+  resize: vertical;
+}
+
+.outline-button,
+.wide-add-button,
+.save-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(8, 8, 8, 0.82);
+  color: var(--yellow);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.outline-button.blue {
+  color: var(--blue);
+  border-color: rgba(72, 167, 255, 0.45);
+}
+
+.outline-button.green {
+  color: var(--green);
+  border-color: rgba(85, 216, 75, 0.45);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 27px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.status-pill::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-green {
+  color: #78ec4c;
+  background: rgba(65, 171, 31, 0.18);
+}
+
+.status-blue {
+  color: #5db0ff;
+  background: rgba(42, 129, 225, 0.18);
+}
+
+.status-purple {
+  color: #c583ff;
+  background: rgba(132, 72, 192, 0.2);
+}
+
+.status-yellow {
+  color: var(--yellow);
+  background: rgba(255, 196, 0, 0.16);
+}

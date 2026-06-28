@@ -1,0 +1,8 @@
+@import "./styles/base.css";
+@import "./styles/layout.css";
+@import "./styles/workspaces.css";
+@import "./styles/admin-panels.css";
+@import "./styles/notifications-card.css";
+@import "./styles/operation-shortcuts.css";
+@import "./styles/active-services-table.css";
+@import "./styles/responsive.css";

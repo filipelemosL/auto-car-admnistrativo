@@ -1,0 +1,43 @@
+.autocar-app {
+  min-height: 100vh;
+  padding: clamp(12px, 1.5vw, 26px);
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.16)),
+    url("/assets/background.png") center top / cover fixed,
+    #040404;
+}
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(680px, 1.12fr) minmax(520px, 0.88fr);
+  gap: clamp(14px, 1.6vw, 28px);
+  width: min(100%, 1900px);
+  margin: 0 auto;
+  align-items: start;
+}
+
+.admin-side,
+.operations-side {
+  min-width: 0;
+}
+
+.admin-component,
+.active-services,
+.notifications-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(145deg, rgba(0, 0, 0, 0.46), rgba(0, 0, 0, 0.88)),
+    url("/assets/component-background.png") center / cover no-repeat,
+    linear-gradient(145deg, rgba(18, 18, 18, 0.92), rgba(0, 0, 0, 0.92)),
+    rgba(0, 0, 0, 0.86);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.admin-component {
+  height: calc(100vh - 265px);
+  min-height: 0;
+  margin-top: 250px;
+  margin-bottom: 15px;
+}

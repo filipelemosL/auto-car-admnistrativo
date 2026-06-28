@@ -1,0 +1,114 @@
+@media (max-width: 1480px) {
+  .workspace-grid {
+    grid-template-columns: minmax(580px, 1.05fr) minmax(470px, 0.95fr);
+  }
+
+  .notifications-card {
+    align-self: stretch;
+  }
+}
+
+@media (max-width: 1180px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .operations-side {
+    order: -1;
+  }
+
+  .top-action-grid {
+    grid-template-columns: var(--top-card-width) var(--top-card-width);
+  }
+}
+
+@media (max-width: 900px) {
+  .autocar-app {
+    padding: 14px;
+    background-attachment: scroll;
+  }
+
+  .client-picker,
+  .block-row,
+  .recurring-row,
+  .panel-top,
+  .service-focus {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .block-actions {
+    overflow-x: auto;
+  }
+
+  .top-action-grid,
+  .shortcut-grid,
+  .client-admin-grid,
+  .finance-kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .budget-head {
+    display: none;
+  }
+
+  .budget-line,
+  .services-head,
+  .services-row,
+  .alert-admin-list article,
+  .finance-list article {
+    grid-template-columns: 1fr;
+  }
+
+  .services-head {
+    display: none;
+  }
+
+  .services-row {
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .component-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 620px) {
+  .top-action-grid,
+  .shortcut-grid,
+  .client-admin-grid,
+  .finance-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .top-action-grid {
+    --top-card-width: min(330px, 100%);
+  }
+
+  .start-service-card {
+    width: var(--top-card-width);
+    height: var(--top-card-height);
+  }
+
+  .notification-item {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .notification-item .whatsapp-button {
+    grid-column: 2;
+    width: 100%;
+    aspect-ratio: auto;
+    min-height: 42px;
+  }
+
+  .check-row {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+
+  .check-row small {
+    grid-column: 2;
+  }
+}

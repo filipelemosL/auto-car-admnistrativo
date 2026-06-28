@@ -1,0 +1,105 @@
+.notifications-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-self: stretch;
+  width: var(--top-card-width);
+  height: var(--top-card-height);
+}
+
+.notifications-card header,
+.notifications-card footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 0 13px;
+  border-bottom: 1px solid var(--line);
+}
+
+.notifications-card header div,
+.notifications-card footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--yellow);
+}
+
+.notifications-card header strong {
+  color: white;
+  text-transform: uppercase;
+}
+
+.notifications-card header button {
+  background: transparent;
+  color: var(--yellow);
+  font-weight: 800;
+}
+
+.notification-list {
+  display: grid;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(255, 196, 0, 0.72) rgba(255, 255, 255, 0.08);
+  scrollbar-width: thin;
+}
+
+.notification-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 196, 0, 0.72);
+}
+
+.notification-item {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 38px;
+  gap: 9px;
+  align-items: center;
+  min-height: 70px;
+  padding: 10px 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.notification-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  color: var(--yellow);
+  background: rgba(255, 196, 0, 0.11);
+}
+
+.notification-item div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.notification-item strong {
+  overflow: hidden;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.whatsapp-button {
+  width: 36px;
+  aspect-ratio: 1;
+  background: #22a742;
+}
+
+.notifications-card footer {
+  justify-content: center;
+  border: 0;
+  color: var(--yellow);
+  font-weight: 900;
+}

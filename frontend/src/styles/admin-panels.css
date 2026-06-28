@@ -1,0 +1,128 @@
+.admin-panel > .service-focus,
+.checklist-board,
+.client-card,
+.finance-list article,
+.alert-admin-list article,
+.kpi-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0)),
+    rgba(12, 12, 12, 0.78);
+}
+
+.panel-top,
+.stage-cell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.panel-top {
+  justify-content: space-between;
+}
+
+.client-admin-grid,
+.finance-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.client-card,
+.kpi-card {
+  display: grid;
+  gap: 9px;
+  padding: 13px;
+}
+
+.client-card strong,
+.client-card span,
+.finance-list strong {
+  display: block;
+}
+
+.client-card small,
+.service-focus p,
+.check-row small,
+.finance-list small,
+.vehicle-strip {
+  color: var(--muted);
+}
+
+.vehicle-strip {
+  display: grid;
+  gap: 5px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.service-focus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+}
+
+.service-focus span {
+  color: var(--yellow);
+  font-weight: 900;
+}
+
+.service-focus h2 {
+  margin: 6px 0;
+  font-size: clamp(1.15rem, 1.7vw, 2rem);
+}
+
+.checklist-board,
+.alert-admin-list,
+.finance-list {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+}
+
+.check-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) minmax(140px, 0.7fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.check-row-done {
+  border-color: rgba(85, 216, 75, 0.34);
+}
+
+.alert-admin-list article,
+.finance-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+}
+
+.finance-list article {
+  grid-template-columns: 74px minmax(0, 1fr) 120px 130px;
+}
+
+.finance-list b,
+.kpi-card strong {
+  color: var(--yellow);
+}
+
+.kpi-card span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.kpi-card strong {
+  font-size: clamp(1rem, 1.2vw, 1.45rem);
+}
