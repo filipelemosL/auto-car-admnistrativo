@@ -1,5 +1,5 @@
 .top-action-grid {
-  --top-card-width: 330px;
+  --top-card-width: 295px;
   --top-card-height: 235px;
 
   display: grid;
@@ -8,6 +8,7 @@
   align-items: stretch;
   justify-content: start;
   margin-bottom: 14px;
+
 }
 
 .start-service-card {

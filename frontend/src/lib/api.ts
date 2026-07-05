@@ -4,6 +4,7 @@ export const apiConfig = {
   apiBaseUrl,
   endpoints: {
     health: `${apiBaseUrl}/health`,
+    appSnapshot: `${apiBaseUrl}/admin/snapshot`,
     clients: `${apiBaseUrl}/clients`,
     budgets: `${apiBaseUrl}/budgets`,
     serviceReports: `${apiBaseUrl}/service-reports`,

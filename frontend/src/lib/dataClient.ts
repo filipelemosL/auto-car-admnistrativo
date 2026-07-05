@@ -1,13 +1,20 @@
 import { apiConfig } from "./api";
+import { trackDbOperation } from "./dbLoading";
 import { cloneMockAppSnapshot } from "../data/mockData";
 import type { AppDataSnapshot } from "../types/appData";
 import type {
   Budget,
   BudgetItem,
   Client,
+  CompanySettings,
+  DiagnosisRecord,
+  FixedCost,
   FinancialEntry,
+  PaymentRecord,
   Reminder,
   ServiceChecklistItem,
+  ServiceOrder,
+  ServiceTask,
   ServiceReport,
   Vehicle,
 } from "../types/domain";
@@ -21,6 +28,7 @@ interface ApiVehicle {
   model: string;
   plate: string;
   year: number;
+  color?: string | null;
   mileage: number;
   status: Vehicle["status"];
 }
@@ -29,6 +37,7 @@ interface ApiClient {
   id: string;
   name: string;
   phone: string;
+  cpf_cnpj?: string | null;
   email: string;
   city: string;
   lifetime_value: number;
@@ -96,11 +105,96 @@ interface ApiFinancialEntry {
   status: FinancialEntry["status"];
 }
 
-const configuredMode = import.meta.env.VITE_DATA_MODE?.toLowerCase() === "api" ? "api" : "mock";
+interface ApiDiagnosisRecord {
+  customer_complaint: string;
+  mechanic_diagnosis: string;
+  diagnostic_tool: string;
+  dtc_codes: string;
+  conclusion: string;
+}
+
+interface ApiServiceTask {
+  id?: string;
+  budget_item_id?: string | null;
+  description: string;
+  status: ServiceTask["status"];
+  notes: string;
+  images: string[];
+  completed_at?: string | null;
+}
+
+interface ApiPaymentRecord {
+  document_type: PaymentRecord["documentType"];
+  paid: boolean;
+  payment_method: string;
+  amount_paid: number;
+  paid_at?: string | null;
+  fiscal_provider_reference?: string | null;
+}
+
+interface ApiServiceOrder {
+  id: string;
+  client_id?: string | null;
+  client_name: string;
+  client_phone: string;
+  vehicle_id?: string | null;
+  vehicle_label: string;
+  stage: ServiceOrder["stage"];
+  status: ServiceOrder["status"];
+  diagnosis: ApiDiagnosisRecord;
+  budget_id?: string | null;
+  budget_items: ApiBudgetItem[];
+  service_tasks: ApiServiceTask[];
+  payment: ApiPaymentRecord;
+  ready_message: string;
+  created_at: string | null;
+  updated_at: string | null;
+  completed_at?: string | null;
+}
+
+interface ApiCompanySettings {
+  id: string;
+  trade_name: string;
+  legal_name: string;
+  cnpj: string;
+  phone: string;
+  email: string;
+  address: string;
+  city_uf: string;
+  cep: string;
+  technical_responsible: string;
+  fiscal_provider?: string | null;
+  fiscal_provider_enabled: boolean;
+  updated_at?: string | null;
+}
+
+interface ApiFixedCost {
+  id: string;
+  description: string;
+  amount: number;
+  recurrence: FixedCost["recurrence"];
+  due_day: number;
+  alert_enabled: boolean;
+  active: boolean;
+  created_at?: string | null;
+}
+
+interface ApiAppSnapshot {
+  clients: ApiClient[];
+  budgets: ApiBudget[];
+  service_reports: ApiServiceReport[];
+  service_orders?: ApiServiceOrder[];
+  reminders: ApiReminder[];
+  financial_entries: ApiFinancialEntry[];
+  company_settings?: ApiCompanySettings;
+  fixed_costs?: ApiFixedCost[];
+}
+
+const configuredMode = import.meta.env.VITE_DATA_MODE?.toLowerCase() === "mock" ? "mock" : "api";
 const mockLatencyMs = Number(import.meta.env.VITE_MOCK_LATENCY_MS ?? "0");
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url);
+  const response = await trackDbOperation(fetch(url));
 
   if (!response.ok) {
     throw new Error(`Falha ao carregar ${url}: ${response.status}`);
@@ -120,6 +214,7 @@ function mapVehicle(vehicle: ApiVehicle): Vehicle {
     model: vehicle.model,
     plate: vehicle.plate,
     year: vehicle.year,
+    color: vehicle.color ?? undefined,
     mileage: vehicle.mileage,
     status: vehicle.status,
   };
@@ -130,6 +225,7 @@ function mapClient(client: ApiClient): Client {
     id: client.id,
     name: client.name,
     phone: client.phone,
+    cpfCnpj: client.cpf_cnpj ?? "",
     email: client.email,
     city: client.city,
     lifetimeValue: client.lifetime_value,
@@ -210,6 +306,92 @@ function mapFinancialEntry(entry: ApiFinancialEntry): FinancialEntry {
   };
 }
 
+function mapDiagnosis(record: ApiDiagnosisRecord): DiagnosisRecord {
+  return {
+    customerComplaint: record.customer_complaint,
+    mechanicDiagnosis: record.mechanic_diagnosis,
+    diagnosticTool: record.diagnostic_tool,
+    dtcCodes: record.dtc_codes,
+    conclusion: record.conclusion,
+  };
+}
+
+function mapPayment(record: ApiPaymentRecord): PaymentRecord {
+  return {
+    documentType: record.document_type,
+    paid: record.paid,
+    paymentMethod: record.payment_method,
+    amountPaid: record.amount_paid,
+    paidAt: record.paid_at ?? undefined,
+    fiscalProviderReference: record.fiscal_provider_reference ?? undefined,
+  };
+}
+
+function mapServiceTask(task: ApiServiceTask, index: number): ServiceTask {
+  return {
+    id: task.id ?? `task_${index + 1}`,
+    budgetItemId: task.budget_item_id ?? undefined,
+    description: task.description,
+    status: task.status,
+    notes: task.notes,
+    images: task.images,
+    completedAt: task.completed_at ?? undefined,
+  };
+}
+
+function mapServiceOrder(order: ApiServiceOrder): ServiceOrder {
+  return {
+    id: order.id,
+    clientId: order.client_id ?? undefined,
+    clientName: order.client_name,
+    clientPhone: order.client_phone,
+    vehicleId: order.vehicle_id ?? undefined,
+    vehicleLabel: order.vehicle_label,
+    stage: order.stage,
+    status: order.status,
+    diagnosis: mapDiagnosis(order.diagnosis),
+    budgetId: order.budget_id ?? undefined,
+    budgetItems: order.budget_items.map((item, index) => mapBudgetItem(item, index, order.id)),
+    serviceTasks: order.service_tasks.map(mapServiceTask),
+    payment: mapPayment(order.payment),
+    readyMessage: order.ready_message,
+    createdAt: order.created_at ?? "",
+    updatedAt: order.updated_at ?? "",
+    completedAt: order.completed_at ?? undefined,
+  };
+}
+
+function mapCompanySettings(settings: ApiCompanySettings): CompanySettings {
+  return {
+    id: settings.id,
+    tradeName: settings.trade_name,
+    legalName: settings.legal_name,
+    cnpj: settings.cnpj,
+    phone: settings.phone,
+    email: settings.email,
+    address: settings.address,
+    cityUf: settings.city_uf,
+    cep: settings.cep,
+    technicalResponsible: settings.technical_responsible,
+    fiscalProvider: settings.fiscal_provider ?? undefined,
+    fiscalProviderEnabled: settings.fiscal_provider_enabled,
+    updatedAt: settings.updated_at ?? undefined,
+  };
+}
+
+function mapFixedCost(cost: ApiFixedCost): FixedCost {
+  return {
+    id: cost.id,
+    description: cost.description,
+    amount: cost.amount,
+    recurrence: cost.recurrence,
+    dueDay: cost.due_day,
+    alertEnabled: cost.alert_enabled,
+    active: cost.active,
+    createdAt: cost.created_at ?? undefined,
+  };
+}
+
 async function getMockSnapshot(): Promise<AppDataSnapshot> {
   if (mockLatencyMs > 0) {
     await sleep(mockLatencyMs);
@@ -219,20 +401,17 @@ async function getMockSnapshot(): Promise<AppDataSnapshot> {
 }
 
 async function getApiSnapshot(): Promise<AppDataSnapshot> {
-  const [clients, budgets, serviceReports, reminders, financialEntries] = await Promise.all([
-    fetchJson<ApiClient[]>(apiConfig.endpoints.clients),
-    fetchJson<ApiBudget[]>(apiConfig.endpoints.budgets),
-    fetchJson<ApiServiceReport[]>(apiConfig.endpoints.serviceReports),
-    fetchJson<ApiReminder[]>(apiConfig.endpoints.reminders),
-    fetchJson<ApiFinancialEntry[]>(apiConfig.endpoints.finance),
-  ]);
+  const snapshot = await fetchJson<ApiAppSnapshot>(apiConfig.endpoints.appSnapshot);
 
   return {
-    clients: clients.map(mapClient),
-    budgets: budgets.map(mapBudget),
-    serviceReports: serviceReports.map(mapServiceReport),
-    reminders: reminders.map(mapReminder),
-    financialEntries: financialEntries.map(mapFinancialEntry),
+    clients: snapshot.clients.map(mapClient),
+    budgets: snapshot.budgets.map(mapBudget),
+    serviceReports: snapshot.service_reports.map(mapServiceReport),
+    serviceOrders: (snapshot.service_orders ?? []).map(mapServiceOrder),
+    reminders: snapshot.reminders.map(mapReminder),
+    financialEntries: snapshot.financial_entries.map(mapFinancialEntry),
+    companySettings: snapshot.company_settings ? mapCompanySettings(snapshot.company_settings) : undefined,
+    fixedCosts: (snapshot.fixed_costs ?? []).map(mapFixedCost),
   };
 }
 

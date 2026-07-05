@@ -14,9 +14,22 @@ interface AppDataContextValue {
 
 const AppDataContext = createContext<AppDataContextValue | undefined>(undefined);
 
+function normalizeSnapshot(snapshot: AppDataSnapshot): AppDataSnapshot {
+  return {
+    clients: snapshot.clients ?? [],
+    budgets: snapshot.budgets ?? [],
+    serviceReports: snapshot.serviceReports ?? [],
+    serviceOrders: snapshot.serviceOrders ?? [],
+    reminders: snapshot.reminders ?? [],
+    financialEntries: snapshot.financialEntries ?? [],
+    companySettings: snapshot.companySettings,
+    fixedCosts: snapshot.fixedCosts ?? [],
+  };
+}
+
 export function AppDataProvider({ children }: PropsWithChildren) {
   const [data, setData] = useState<AppDataSnapshot>(
-    dataClient.mode === "mock" ? cloneMockAppSnapshot() : emptyAppSnapshot,
+    dataClient.mode === "mock" ? normalizeSnapshot(cloneMockAppSnapshot()) : normalizeSnapshot(emptyAppSnapshot),
   );
   const [dataMode, setDataMode] = useState<DataMode>(dataClient.mode);
   const [loading, setLoading] = useState<boolean>(dataClient.mode === "api");
@@ -28,12 +41,12 @@ export function AppDataProvider({ children }: PropsWithChildren) {
 
     try {
       const snapshot = await dataClient.getAppSnapshot();
-      setData(snapshot);
+      setData(normalizeSnapshot(snapshot));
       setDataMode(dataClient.mode);
     } catch (loadError) {
-      setData(cloneMockAppSnapshot());
-      setDataMode("mock");
-      setError("API indisponivel no momento. Exibindo mock local para manter o front funcionando.");
+      setData(normalizeSnapshot(emptyAppSnapshot));
+      setDataMode(dataClient.mode);
+      setError("API indisponivel no momento. Inicie o backend para usar o banco JSON local.");
       console.error(loadError);
     } finally {
       setLoading(false);

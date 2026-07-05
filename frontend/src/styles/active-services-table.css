@@ -86,6 +86,17 @@
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.services-row-button {
+  width: 100%;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+}
+
+.services-row-button:hover {
+  background: rgba(255, 196, 0, 0.08);
+}
+
 .services-row > div {
   display: flex;
   align-items: center;

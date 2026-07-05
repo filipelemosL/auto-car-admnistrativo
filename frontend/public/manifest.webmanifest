@@ -1,0 +1,25 @@
+{
+  "name": "AutoCar Admin",
+  "short_name": "AutoCar",
+  "description": "Painel administrativo para oficina mecanica.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape-primary",
+  "background_color": "#050505",
+  "theme_color": "#D9A300",
+  "icons": [
+    {
+      "src": "/assets/autocar-clean-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/autocar-clean-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

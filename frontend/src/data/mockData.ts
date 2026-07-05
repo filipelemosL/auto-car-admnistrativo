@@ -1,8 +1,11 @@
 import type {
   Budget,
   Client,
+  CompanySettings,
+  FixedCost,
   FinancialEntry,
   Reminder,
+  ServiceOrder,
   ServiceReport,
 } from "../types/domain";
 import type { AppDataSnapshot } from "../types/appData";
@@ -12,6 +15,7 @@ const clients: Client[] = [
     id: "cli_001",
     name: "Marina Costa",
     phone: "(11) 98877-1100",
+    cpfCnpj: "123.456.789-00",
     email: "marina@exemplo.com",
     city: "Sao Paulo",
     lifetimeValue: 12480,
@@ -23,6 +27,7 @@ const clients: Client[] = [
         model: "Corolla XEi",
         plate: "BRA2E19",
         year: 2021,
+        color: "Prata",
         mileage: 58210,
         status: "Revisao em aberto",
       },
@@ -32,6 +37,7 @@ const clients: Client[] = [
         model: "Fit EXL",
         plate: "HND4M52",
         year: 2018,
+        color: "Branco",
         mileage: 73400,
         status: "Em dia",
       },
@@ -41,6 +47,7 @@ const clients: Client[] = [
     id: "cli_002",
     name: "Carlos Mendes",
     phone: "(11) 99111-2200",
+    cpfCnpj: "987.654.321-00",
     email: "carlos@exemplo.com",
     city: "Osasco",
     lifetimeValue: 8450,
@@ -52,6 +59,7 @@ const clients: Client[] = [
         model: "Saveiro Cross",
         plate: "SVR9P11",
         year: 2020,
+        color: "Vermelho",
         mileage: 91230,
         status: "Urgente",
       },
@@ -61,6 +69,7 @@ const clients: Client[] = [
     id: "cli_003",
     name: "Juliana Araujo",
     phone: "(11) 97770-1009",
+    cpfCnpj: "321.654.987-00",
     email: "juliana@exemplo.com",
     city: "Barueri",
     lifetimeValue: 5630,
@@ -72,6 +81,7 @@ const clients: Client[] = [
         model: "Renegade Longitude",
         plate: "JEP3G45",
         year: 2022,
+        color: "Cinza",
         mileage: 30110,
         status: "Em dia",
       },
@@ -215,24 +225,119 @@ const financialEntries: FinancialEntry[] = [
   },
 ];
 
+const serviceOrders: ServiceOrder[] = [
+  {
+    id: "jor_001",
+    clientId: "cli_002",
+    clientName: "Carlos Mendes",
+    clientPhone: "(11) 99111-2200",
+    vehicleId: "veh_003",
+    vehicleLabel: "Volkswagen Saveiro Cross 2020",
+    stage: "service",
+    status: "Em servico",
+    diagnosis: {
+      customerComplaint: "Cliente relata ruido na suspensao dianteira.",
+      mechanicDiagnosis: "Folga identificada em componentes dianteiros.",
+      diagnosticTool: "Teste de rua + elevador",
+      dtcCodes: "Nenhum DTC registrado",
+      conclusion: "Necessaria substituicao e conferencia dos terminais.",
+    },
+    budgetId: "orc_001",
+    budgetItems: [
+      { id: "item_001", description: "Jogo de pastilhas dianteiras", quantity: 1, unitPrice: 320 },
+      { id: "item_002", description: "Troca de fluido de freio", quantity: 1, unitPrice: 140 },
+    ],
+    serviceTasks: [
+      {
+        id: "tsk_001",
+        budgetItemId: "item_001",
+        description: "Jogo de pastilhas dianteiras",
+        status: "Em andamento",
+        notes: "Desmontagem iniciada.",
+        images: [],
+      },
+      {
+        id: "tsk_002",
+        budgetItemId: "item_002",
+        description: "Troca de fluido de freio",
+        status: "Aguardando inicio",
+        notes: "",
+        images: [],
+      },
+    ],
+    payment: {
+      documentType: "Recibo",
+      paid: false,
+      paymentMethod: "",
+      amountPaid: 0,
+    },
+    readyMessage: "",
+    createdAt: "2026-06-25T11:20:00.000Z",
+    updatedAt: "2026-06-25T11:20:00.000Z",
+  },
+];
+
+const companySettings: CompanySettings = {
+  id: "company_default",
+  tradeName: "AutoCar",
+  legalName: "AutoCar Oficina Mecanica",
+  cnpj: "",
+  phone: "(11) 4002-8922",
+  email: "contato@autocar.local",
+  address: "Av. Principal, 100",
+  cityUf: "Sao Paulo / SP",
+  cep: "01000-000",
+  technicalResponsible: "Carlos Mecanico",
+  fiscalProviderEnabled: false,
+  updatedAt: "2026-06-25T11:20:00.000Z",
+};
+
+const fixedCosts: FixedCost[] = [
+  {
+    id: "fix_001",
+    description: "Energia eletrica",
+    amount: 680,
+    recurrence: "Mensal",
+    dueDay: 12,
+    alertEnabled: true,
+    active: true,
+    createdAt: "2026-06-01T10:00:00.000Z",
+  },
+  {
+    id: "fix_002",
+    description: "Aluguel da oficina",
+    amount: 3200,
+    recurrence: "Mensal",
+    dueDay: 5,
+    alertEnabled: true,
+    active: true,
+    createdAt: "2026-06-01T10:00:00.000Z",
+  },
+];
+
 export const mockAppSnapshot: AppDataSnapshot = {
   clients,
   budgets,
   serviceReports,
+  serviceOrders,
   reminders,
   financialEntries,
+  companySettings,
+  fixedCosts,
 };
 
 export const emptyAppSnapshot: AppDataSnapshot = {
   clients: [],
   budgets: [],
   serviceReports: [],
+  serviceOrders: [],
   reminders: [],
   financialEntries: [],
+  fixedCosts: [],
 };
 
 export function cloneMockAppSnapshot(): AppDataSnapshot {
   return JSON.parse(JSON.stringify(mockAppSnapshot)) as AppDataSnapshot;
 }
 
-export { budgets, clients, financialEntries, reminders, serviceReports };
+export { budgets, clients, companySettings, financialEntries, fixedCosts, reminders, serviceOrders, serviceReports };

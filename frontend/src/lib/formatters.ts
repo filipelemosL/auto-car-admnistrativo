@@ -17,18 +17,36 @@ export function formatCompact(value: number) {
 }
 
 export function formatDate(value: string) {
+  if (!value) {
+    return "Sem data";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Sem data";
+  }
+
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  }).format(new Date(value));
+  }).format(date);
 }
 
 export function formatDateTime(value: string) {
+  if (!value) {
+    return "Sem data";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Sem data";
+  }
+
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+  }).format(date);
 }
