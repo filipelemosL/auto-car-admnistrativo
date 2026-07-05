@@ -1,6 +1,7 @@
 from fastapi import APIRouter, status
 from fastapi.responses import StreamingResponse
 
+from app.schemas.admin import ServiceReportTransparency
 from app.schemas.common import DeleteResponse
 from app.schemas.service_reports import (
     ImageAttachmentRequest,
@@ -8,10 +9,12 @@ from app.schemas.service_reports import (
     ServiceReportCreate,
     ServiceReportUpdate,
 )
+from app.services.admin_panels import AdminPanelService
 from app.services.service_reports import ServiceReportService
 
 router = APIRouter()
 service = ServiceReportService()
+admin_service = AdminPanelService()
 
 
 @router.get("", response_model=list[ServiceReport])
@@ -22,6 +25,11 @@ def list_reports() -> list[ServiceReport]:
 @router.get("/{report_id}", response_model=ServiceReport)
 def get_report(report_id: str) -> ServiceReport:
     return service.get_report(report_id)
+
+
+@router.get("/{report_id}/transparency", response_model=ServiceReportTransparency)
+def get_report_transparency(report_id: str) -> ServiceReportTransparency:
+    return admin_service.get_service_report_transparency(report_id)
 
 
 @router.post("", response_model=ServiceReport, status_code=status.HTTP_201_CREATED)

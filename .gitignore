@@ -6,6 +6,9 @@ venv/
 __pycache__/
 *.pyc
 *.tsbuildinfo
+vite-dev*.log
+
+# Environment files
 .env
 frontend/.env
 backend/.env

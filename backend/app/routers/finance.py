@@ -2,7 +2,13 @@ from fastapi import APIRouter, Query, status
 from fastapi.responses import StreamingResponse
 
 from app.schemas.common import DeleteResponse
-from app.schemas.finance import FinancialEntry, FinancialEntryCreate, FinancialEntryUpdate, FinancialSummary
+from app.schemas.finance import (
+    FinancialEntry,
+    FinancialEntryCreate,
+    FinancialEntryUpdate,
+    FinancialHistory,
+    FinancialSummary,
+)
 from app.services.finance import FinanceService
 
 router = APIRouter()
@@ -23,6 +29,22 @@ def get_summary(period: str, reference: str = Query(..., description="2026-06, 2
 def export_summary_pdf(period: str, reference: str = Query(..., description="2026-06, 2026-Q2 ou 2026")) -> StreamingResponse:
     file_buffer = service.export_summary_pdf(period=period, reference=reference)
     filename = f"finance-summary-{period}-{reference}.pdf"
+    return StreamingResponse(
+        file_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/history", response_model=FinancialHistory)
+def get_history(years: int = Query(5, ge=1, le=5)) -> FinancialHistory:
+    return service.get_history(years=years)
+
+
+@router.get("/{entry_id}/exports/pdf")
+def export_entry_pdf(entry_id: str) -> StreamingResponse:
+    file_buffer = service.export_entry_pdf(entry_id)
+    filename = f"finance-entry-{entry_id}.pdf"
     return StreamingResponse(
         file_buffer,
         media_type="application/pdf",

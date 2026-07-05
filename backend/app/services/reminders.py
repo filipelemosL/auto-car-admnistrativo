@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from app.schemas.reminders import Reminder, ReminderCreate, ReminderUpdate
 from app.services.base import BaseService
-from app.services.mock_data import get_store
+from app.services.mock_data import get_store, save_store
 
 
 class ReminderService(BaseService):
@@ -39,6 +39,7 @@ class ReminderService(BaseService):
                 **payload.model_dump(),
             ).model_dump(mode="json")
             self.store["reminders"].insert(0, record)
+            save_store()
             return Reminder.model_validate(record)
 
         response = self.supabase.table(self.table_name).insert(payload.model_dump()).execute()

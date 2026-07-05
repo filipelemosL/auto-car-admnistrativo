@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from app.schemas.clients import Client, ClientCreate, ClientUpdate, Vehicle
 from app.services.base import BaseService
-from app.services.mock_data import get_store
+from app.services.mock_data import get_store, save_store
 
 
 class ClientService(BaseService):
@@ -58,6 +58,7 @@ class ClientService(BaseService):
             ).model_dump(mode="json")
             record["vehicles"] = vehicles
             self.store["clients"].insert(0, record)
+            save_store()
             return Client.model_validate(record)
 
         created_client = (

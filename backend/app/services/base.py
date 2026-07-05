@@ -9,6 +9,7 @@ from fastapi import HTTPException, status
 
 from app.core.config import get_settings
 from app.core.supabase import get_supabase_client
+from app.services.mock_data import save_store
 
 
 class BaseService:
@@ -56,6 +57,7 @@ class BaseService:
             if record.get(key) == value:
                 updated = updater(deepcopy(record))
                 records[index] = deepcopy(updated)
+                save_store()
                 return deepcopy(updated)
         raise self._not_found(entity)
 
@@ -69,5 +71,6 @@ class BaseService:
         for index, record in enumerate(records):
             if record.get(key) == value:
                 records.pop(index)
+                save_store()
                 return
         raise self._not_found(entity)

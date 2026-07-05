@@ -3,10 +3,17 @@ from __future__ import annotations
 from copy import deepcopy
 from io import BytesIO
 
-from app.schemas.finance import FinancialEntry, FinancialEntryCreate, FinancialEntryUpdate, FinancialSummary
+from app.schemas.finance import (
+    FinancialAggregate,
+    FinancialEntry,
+    FinancialEntryCreate,
+    FinancialEntryUpdate,
+    FinancialHistory,
+    FinancialSummary,
+)
 from app.services.base import BaseService
-from app.services.mock_data import get_store
-from app.templates.pdf_builders import build_financial_summary_pdf
+from app.services.mock_data import get_store, save_store
+from app.templates.pdf_builders import build_financial_entry_pdf, build_financial_summary_pdf
 
 
 class FinanceService(BaseService):
@@ -41,13 +48,14 @@ class FinanceService(BaseService):
                 **payload.model_dump(),
             ).model_dump(mode="json")
             self.store["finance_entries"].insert(0, record)
+            save_store()
             return FinancialEntry.model_validate(record)
 
-        response = self.supabase.table(self.table_name).insert(payload.model_dump()).execute()
+        response = self.supabase.table(self.table_name).insert(payload.model_dump(mode="json")).execute()
         return FinancialEntry.model_validate(response.data[0])
 
     def update_entry(self, entry_id: str, payload: FinancialEntryUpdate) -> FinancialEntry:
-        update_data = payload.model_dump(exclude_unset=True)
+        update_data = payload.model_dump(mode="json", exclude_unset=True)
 
         if self.using_mock:
             record = self._update_in_memory(
@@ -86,6 +94,24 @@ class FinanceService(BaseService):
         summary = self.get_summary(period, reference)
         return build_financial_summary_pdf(summary)
 
+    def export_entry_pdf(self, entry_id: str) -> BytesIO:
+        entry = self.get_entry(entry_id)
+        return build_financial_entry_pdf(entry)
+
+    def get_history(self, years: int = 5) -> FinancialHistory:
+        safe_years = max(1, min(years, 5))
+        entries = self.list_entries()
+        years_in_data = sorted({entry.reference_month.split("-")[0] for entry in entries}, reverse=True)
+        selected_years = set(years_in_data[:safe_years])
+        selected_entries = [
+            entry for entry in entries if entry.reference_month.split("-")[0] in selected_years
+        ]
+
+        monthly = self._aggregate_entries(selected_entries, "monthly")
+        quarterly = self._aggregate_entries(selected_entries, "quarterly")
+        yearly = self._aggregate_entries(selected_entries, "yearly")
+        return FinancialHistory(years=safe_years, monthly=monthly, quarterly=quarterly, yearly=yearly)
+
     def _matches_period(self, reference_month: str, period: str, reference: str) -> bool:
         year, month = reference_month.split("-")
 
@@ -115,3 +141,38 @@ class FinanceService(BaseService):
             return year == ref_year and quarter_map[month] == ref_quarter
 
         return False
+
+    def _aggregate_entries(self, entries: list[FinancialEntry], period: str) -> list[FinancialAggregate]:
+        grouped: dict[str, dict[str, float]] = {}
+
+        for entry in entries:
+            reference = self._period_reference(entry.reference_month, period)
+            if reference not in grouped:
+                grouped[reference] = {"total_revenue": 0.0, "total_cost": 0.0}
+
+            if entry.type == "Receita":
+                grouped[reference]["total_revenue"] += entry.amount
+            else:
+                grouped[reference]["total_cost"] += entry.amount
+
+        aggregates = [
+            FinancialAggregate(
+                period=period,
+                reference=reference,
+                total_revenue=totals["total_revenue"],
+                total_cost=totals["total_cost"],
+                profit=totals["total_revenue"] - totals["total_cost"],
+            )
+            for reference, totals in grouped.items()
+        ]
+        return sorted(aggregates, key=lambda item: item.reference, reverse=True)
+
+    def _period_reference(self, reference_month: str, period: str) -> str:
+        year, month = reference_month.split("-")
+        if period == "monthly":
+            return reference_month
+        if period == "yearly":
+            return year
+
+        quarter = ((int(month) - 1) // 3) + 1
+        return f"{year}-Q{quarter}"

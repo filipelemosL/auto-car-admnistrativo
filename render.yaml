@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: autocar-admin-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: AUTOCAR_ENVIRONMENT
+        value: production
+      - key: AUTOCAR_DEBUG
+        value: "false"
+      - key: AUTOCAR_USE_MOCK_DATA
+        value: "false"
+      - key: AUTOCAR_CORS_ORIGINS
+        sync: false
+      - key: AUTOCAR_SUPABASE_URL
+        sync: false
+      - key: AUTOCAR_SUPABASE_KEY
+        sync: false
+      - key: AUTOCAR_SUPABASE_STORAGE_BUCKET
+        sync: false
+      - key: AUTOCAR_KEEPALIVE_ENABLED
+        value: "true"
+      - key: AUTOCAR_KEEPALIVE_INTERVAL_DAYS
+        value: "5"
+      - key: AUTOCAR_KEEPALIVE_TABLE
+        value: clients

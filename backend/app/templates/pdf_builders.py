@@ -8,7 +8,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from app.schemas.budgets import Budget
-from app.schemas.finance import FinancialSummary
+from app.schemas.finance import FinancialEntry, FinancialSummary
 from app.schemas.service_reports import ServiceReport
 from app.templates.formatters import format_brl, format_date, format_datetime
 
@@ -169,6 +169,25 @@ def build_financial_summary_pdf(summary: FinancialSummary) -> BytesIO:
         )
     story.append(_soft_table(rows))
     return _build_document_buffer("finance-summary", story)
+
+
+def build_financial_entry_pdf(entry: FinancialEntry) -> BytesIO:
+    styles = _styles()
+    title = "Nota Fiscal" if entry.document_type == "NF" else "Recibo" if entry.document_type == "Recibo" else "Despesa"
+    story = [
+        Paragraph(f"{title} AutoCar", styles["title"]),
+        Paragraph(f"Documento: {entry.document_type}", styles["body"]),
+        Paragraph(f"Tipo: {entry.type}", styles["body"]),
+        Paragraph(f"Categoria: {entry.category}", styles["body"]),
+        Paragraph(f"Status: {entry.status}", styles["body"]),
+        Paragraph(f"Data: {format_datetime(entry.issued_at)}", styles["body"]),
+        Spacer(1, 14),
+        Paragraph("Descricao", styles["subtitle"]),
+        Paragraph(entry.description, styles["body"]),
+        Spacer(1, 14),
+        Paragraph(f"Valor: {format_brl(entry.amount)}", styles["body"]),
+    ]
+    return _build_document_buffer(f"finance-{entry.id}", story)
 
 
 def _soft_table(data: list[list[str]]) -> Table:

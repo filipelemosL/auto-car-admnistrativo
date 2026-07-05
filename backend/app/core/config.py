@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     supabase_url: str | None = None
     supabase_key: str | None = None
     supabase_storage_bucket: str = "service-images"
+    keepalive_enabled: bool = True
+    keepalive_interval_days: int = 5
+    keepalive_table: str = "clients"
 
     @field_validator("cors_origins", mode="before")
     @classmethod

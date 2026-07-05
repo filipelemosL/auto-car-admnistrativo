@@ -42,3 +42,18 @@ class FinancialSummary(BaseModel):
     total_cost: float
     profit: float
     entries: list[FinancialEntry]
+
+
+class FinancialAggregate(BaseModel):
+    period: str
+    reference: str
+    total_revenue: float
+    total_cost: float
+    profit: float
+
+
+class FinancialHistory(BaseModel):
+    years: int
+    monthly: list[FinancialAggregate]
+    quarterly: list[FinancialAggregate]
+    yearly: list[FinancialAggregate]

@@ -10,7 +10,7 @@ from app.schemas.service_reports import (
     ServiceReportUpdate,
 )
 from app.services.base import BaseService
-from app.services.mock_data import get_store
+from app.services.mock_data import get_store, save_store
 from app.templates.pdf_builders import build_service_report_pdf
 
 
@@ -49,6 +49,7 @@ class ServiceReportService(BaseService):
                 **data,
             ).model_dump(mode="json")
             self.store["service_reports"].insert(0, record)
+            save_store()
             return ServiceReport.model_validate(record)
 
         response = self.supabase.table(self.table_name).insert(data).execute()

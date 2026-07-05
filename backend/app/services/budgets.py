@@ -3,15 +3,16 @@ from __future__ import annotations
 from copy import deepcopy
 from io import BytesIO
 
-from app.schemas.budgets import Budget, BudgetCreate, BudgetUpdate
+from app.schemas.budgets import Budget, BudgetCreate, BudgetPreset, BudgetPresetCreate, BudgetPresetUpdate, BudgetUpdate
 from app.services.base import BaseService
-from app.services.mock_data import get_store
+from app.services.mock_data import get_store, save_store
 from app.templates.pdf_builders import build_budget_pdf
 from app.templates.whatsapp import build_budget_whatsapp_message
 
 
 class BudgetService(BaseService):
     table_name = "budgets"
+    preset_table_name = "budget_presets"
 
     def __init__(self) -> None:
         super().__init__()
@@ -42,6 +43,7 @@ class BudgetService(BaseService):
                 **payload.model_dump(),
             ).model_dump(mode="json")
             self.store["budgets"].insert(0, record)
+            save_store()
             return Budget.model_validate(record)
 
         response = self.supabase.table(self.table_name).insert(payload.model_dump()).execute()
@@ -77,3 +79,42 @@ class BudgetService(BaseService):
     def build_pdf_export(self, budget_id: str) -> BytesIO:
         budget = self.get_budget(budget_id)
         return build_budget_pdf(budget)
+
+    def list_presets(self) -> list[BudgetPreset]:
+        if self.using_mock:
+            return [BudgetPreset.model_validate(deepcopy(item)) for item in self.store["budget_presets"]]
+
+        response = self.supabase.table(self.preset_table_name).select("*").order("created_at", desc=True).execute()
+        return [BudgetPreset.model_validate(item) for item in response.data]
+
+    def create_preset(self, payload: BudgetPresetCreate) -> BudgetPreset:
+        if self.using_mock:
+            record = BudgetPreset(
+                id=self._new_id("pre"),
+                created_at=self._now(),
+                **payload.model_dump(),
+            ).model_dump(mode="json")
+            self.store["budget_presets"].insert(0, record)
+            save_store()
+            return BudgetPreset.model_validate(record)
+
+        response = self.supabase.table(self.preset_table_name).insert(payload.model_dump()).execute()
+        return BudgetPreset.model_validate(response.data[0])
+
+    def update_preset(self, preset_id: str, payload: BudgetPresetUpdate) -> BudgetPreset:
+        update_data = payload.model_dump(exclude_unset=True)
+        if self.using_mock:
+            record = self._update_in_memory(
+                self.store["budget_presets"],
+                "id",
+                preset_id,
+                lambda item: {**item, **update_data},
+                "Predefinicao de orcamento",
+            )
+            return BudgetPreset.model_validate(record)
+
+        self.supabase.table(self.preset_table_name).update(update_data).eq("id", preset_id).execute()
+        response = self.supabase.table(self.preset_table_name).select("*").eq("id", preset_id).limit(1).execute()
+        if not response.data:
+            raise self._not_found("Predefinicao de orcamento")
+        return BudgetPreset.model_validate(response.data[0])

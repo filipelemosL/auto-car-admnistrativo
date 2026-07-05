@@ -40,3 +40,28 @@ class Budget(BudgetBase):
 
 class BudgetWhatsappExport(BaseModel):
     message: str
+
+
+class BudgetPresetBase(BaseModel):
+    description: str
+    quantity: int = Field(default=1, ge=1)
+    unit_price: float = Field(default=0, ge=0)
+    item_type: Literal["Servico", "Peca"] = "Servico"
+    notes: str = ""
+
+
+class BudgetPresetCreate(BudgetPresetBase):
+    pass
+
+
+class BudgetPresetUpdate(BaseModel):
+    description: str | None = None
+    quantity: int | None = Field(default=None, ge=1)
+    unit_price: float | None = Field(default=None, ge=0)
+    item_type: Literal["Servico", "Peca"] | None = None
+    notes: str | None = None
+
+
+class BudgetPreset(BudgetPresetBase):
+    id: str
+    created_at: datetime | None = None

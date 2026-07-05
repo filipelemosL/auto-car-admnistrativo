@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 
 class VehicleBase(BaseModel):
@@ -8,6 +8,7 @@ class VehicleBase(BaseModel):
     model: str
     plate: str
     year: int = Field(ge=1950, le=2100)
+    color: str = ""
     mileage: int = Field(ge=0)
     status: str = "Em dia"
 
@@ -21,6 +22,7 @@ class VehicleUpdate(BaseModel):
     model: str | None = None
     plate: str | None = None
     year: int | None = Field(default=None, ge=1950, le=2100)
+    color: str | None = None
     mileage: int | None = Field(default=None, ge=0)
     status: str | None = None
 
@@ -34,7 +36,8 @@ class Vehicle(VehicleBase):
 class ClientBase(BaseModel):
     name: str
     phone: str
-    email: EmailStr
+    cpf_cnpj: str = ""
+    email: str = ""
     city: str
     lifetime_value: float = Field(default=0, ge=0)
     last_visit: datetime | None = None
@@ -47,7 +50,7 @@ class ClientCreate(ClientBase):
 class ClientUpdate(BaseModel):
     name: str | None = None
     phone: str | None = None
-    email: EmailStr | None = None
+    email: str | None = None
     city: str | None = None
     lifetime_value: float | None = Field(default=None, ge=0)
     last_visit: datetime | None = None
