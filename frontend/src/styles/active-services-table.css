@@ -44,10 +44,9 @@
   background: rgba(0, 0, 0, 0.46);
 }
 
-.services-head,
-.services-row {
+.services-head {
   display: grid;
-  grid-template-columns: 1.35fr 1fr 1.1fr 0.9fr;
+  grid-template-columns: 1.35fr 1fr 1.1fr 0.9fr 92px;
 }
 
 .services-body {
@@ -79,11 +78,18 @@
   color: white;
 }
 
-.services-row {
+.services-row-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
   min-height: 60px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.services-row {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1.1fr 0.9fr;
   align-items: center;
   padding: 0 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .services-row-button {
@@ -95,6 +101,17 @@
 
 .services-row-button:hover {
   background: rgba(255, 196, 0, 0.08);
+}
+
+.services-delete-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 12px;
+}
+
+.services-delete-cell .outline-button {
+  min-width: 76px;
 }
 
 .services-row > div {

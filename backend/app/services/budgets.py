@@ -118,3 +118,10 @@ class BudgetService(BaseService):
         if not response.data:
             raise self._not_found("Predefinicao de orcamento")
         return BudgetPreset.model_validate(response.data[0])
+
+    def delete_preset(self, preset_id: str) -> None:
+        if self.using_mock:
+            self._delete_in_memory(self.store["budget_presets"], "id", preset_id, "Predefinicao de orcamento")
+            return
+
+        self.supabase.table(self.preset_table_name).delete().eq("id", preset_id).execute()

@@ -590,6 +590,31 @@
   white-space: nowrap;
 }
 
+.admin-data-row .admin-row-actions,
+.client-card-actions,
+.service-focus-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.admin-data-row .admin-row-actions {
+  flex-wrap: wrap;
+}
+
+.client-card-actions {
+  justify-content: stretch;
+}
+
+.client-card-actions .outline-button {
+  flex: 1 1 0;
+}
+
+.service-focus-actions {
+  flex-wrap: wrap;
+}
+
 .admin-data-row.highlighted {
   border-color: rgba(255, 196, 0, 0.44);
   background:

@@ -56,6 +56,7 @@
   .budget-line,
   .services-head,
   .services-row,
+  .services-row-shell,
   .alert-admin-list article,
   .finance-list article {
     grid-template-columns: 1fr;
@@ -68,6 +69,15 @@
   .services-row {
     gap: 12px;
     padding: 18px;
+  }
+
+  .services-delete-cell {
+    justify-content: stretch;
+    padding: 0 18px 16px;
+  }
+
+  .services-delete-cell .outline-button {
+    width: 100%;
   }
 
   .component-banner {

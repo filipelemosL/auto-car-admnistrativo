@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Query, status
 
+from app.schemas.common import DeleteResponse
 from app.schemas.service_orders import (
     AddExtraServiceRequest,
     ApproveBudgetRequest,
@@ -35,6 +36,12 @@ def create_order(payload: ServiceOrderCreate) -> ServiceOrder:
 @router.put("/{order_id}", response_model=ServiceOrder)
 def update_order(order_id: str, payload: ServiceOrderUpdate) -> ServiceOrder:
     return service.update_order(order_id, payload)
+
+
+@router.delete("/{order_id}", response_model=DeleteResponse)
+def delete_order(order_id: str) -> DeleteResponse:
+    service.delete_order(order_id)
+    return DeleteResponse(detail="Servico removido com sucesso.")
 
 
 @router.post("/{order_id}/diagnosis", response_model=ServiceOrder)

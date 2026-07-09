@@ -87,6 +87,13 @@ class ServiceOrderService(BaseService):
         self.supabase.table(self.table_name).update(update_data).eq("id", order_id).execute()
         return self.get_order(order_id)
 
+    def delete_order(self, order_id: str) -> None:
+        if self.using_mock:
+            self._delete_in_memory(self.store["service_orders"], "id", order_id, "Jornada")
+            return
+
+        self.supabase.table(self.table_name).delete().eq("id", order_id).execute()
+
     def save_diagnosis(self, order_id: str, payload: DiagnosisRecord) -> ServiceOrder:
         return self.update_order(
             order_id,

@@ -102,6 +102,10 @@ type BudgetPresetDraft = {
   itemType: "Servico" | "Peca";
 };
 
+type DeleteResponse = {
+  detail: string;
+};
+
 type DiagnosisPrintData = {
   complaint: string;
   mechanicDiagnosis: string;
@@ -168,6 +172,22 @@ async function confirmSystemAction(message: string, title = "Confirmar acao") {
     confirmButtonText: "Sim, continuar",
     cancelButtonText: "Cancelar",
     confirmButtonColor: "#D9A300",
+    cancelButtonColor: "#475569",
+    background: "#111111",
+    color: "#F8FAFC",
+  });
+  return result.isConfirmed;
+}
+
+async function confirmDeleteAction(entityLabel: string, entityName: string) {
+  const result = await Swal.fire({
+    title: `Excluir ${entityLabel}?`,
+    text: `Esta acao remove ${entityName} e nao pode ser desfeita.`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Excluir",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#D92D20",
     cancelButtonColor: "#475569",
     background: "#111111",
     color: "#F8FAFC",
@@ -1658,6 +1678,26 @@ function BudgetLibraryWorkspace({ budgets }: { budgets: Budget[] }) {
     await createPreset(item.description, item.unitPrice);
   }
 
+  async function deletePreset(preset: BudgetPresetDraft) {
+    if (!(await confirmDeleteAction("predefinicao", preset.description))) {
+      return;
+    }
+
+    try {
+      const response = await apiJson<DeleteResponse>(`/budgets/presets/${preset.id}`, {
+        method: "DELETE",
+      });
+      setPresets((current) => current.filter((item) => item.id !== preset.id));
+      setPresetMessage(response.detail);
+      await reload();
+      await showSystemSuccess(response.detail);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao excluir predefinicao.";
+      setPresetMessage(message);
+      await showSystemError(message);
+    }
+  }
+
   return (
     <AdminPanelShell
       icon={ClipboardList}
@@ -1789,7 +1829,13 @@ function BudgetLibraryWorkspace({ budgets }: { budgets: Budget[] }) {
                 <strong>{preset.description}</strong>
                 <span>{preset.itemType} / qtd. {preset.quantity}</span>
               </div>
-              <b>{formatCurrency(preset.unitPrice * preset.quantity)}</b>
+              <div className="admin-row-actions">
+                <b>{formatCurrency(preset.unitPrice * preset.quantity)}</b>
+                <button className="outline-button danger compact" type="button" onClick={() => void deletePreset(preset)}>
+                  <Trash2 size={16} />
+                  Excluir
+                </button>
+              </div>
             </article>
           ))}
           {!presets.length ? (
@@ -1933,10 +1979,31 @@ function BudgetWorkspace({ budget, clients }: { budget?: Budget; clients: Client
 }
 
 function ClientsWorkspace({ clients, serviceOrders }: { clients: Client[]; serviceOrders: ServiceOrder[] }) {
+  const { reload } = useAppData();
   const vehicles = clients.flatMap((client) => client.vehicles);
   const [historyClientId, setHistoryClientId] = useState<string | null>(null);
   const historyClient = clients.find((client) => client.id === historyClientId);
   const clientHistory = serviceOrders.filter((order) => order.clientId === historyClientId || order.clientName === historyClient?.name);
+
+  async function deleteClient(client: Client) {
+    if (!(await confirmDeleteAction("cliente", client.name))) {
+      return;
+    }
+
+    try {
+      const response = await apiJson<DeleteResponse>(`/clients/${client.id}`, {
+        method: "DELETE",
+      });
+      if (historyClientId === client.id) {
+        setHistoryClientId(null);
+      }
+      await reload();
+      await showSystemSuccess(response.detail);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao excluir cliente.";
+      await showSystemError(message);
+    }
+  }
 
   return (
     <AdminPanelShell
@@ -1991,10 +2058,16 @@ function ClientsWorkspace({ clients, serviceOrders }: { clients: Client[]; servi
                   </span>
                 ))}
               </div>
-              <button className="outline-button" type="button" onClick={() => setHistoryClientId(client.id)}>
-                <History size={16} />
-                Servicos executados
-              </button>
+              <div className="client-card-actions">
+                <button className="outline-button" type="button" onClick={() => setHistoryClientId(client.id)}>
+                  <History size={16} />
+                  Servicos executados
+                </button>
+                <button className="outline-button danger" type="button" onClick={() => void deleteClient(client)}>
+                  <Trash2 size={16} />
+                  Excluir
+                </button>
+              </div>
             </article>
           ))}
         </div>
@@ -2042,7 +2115,25 @@ function ClientsWorkspace({ clients, serviceOrders }: { clients: Client[]; servi
 }
 
 function ServiceWorkspace({ report }: { report?: ServiceReport }) {
+  const { reload } = useAppData();
   const reportDocxHref = report ? `${apiBaseUrl}/documents/relatorio/${report.id}/download` : emittedFiles.report;
+
+  async function deleteReport() {
+    if (!report || !(await confirmDeleteAction("servico", report.title))) {
+      return;
+    }
+
+    try {
+      const response = await apiJson<DeleteResponse>(`/service-reports/${report.id}`, {
+        method: "DELETE",
+      });
+      await reload();
+      await showSystemSuccess(response.detail);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao excluir servico.";
+      await showSystemError(message);
+    }
+  }
 
   return (
     <AdminPanelShell
@@ -2063,7 +2154,15 @@ function ServiceWorkspace({ report }: { report?: ServiceReport }) {
             <h2>{report?.vehicleLabel ?? "Servico sem veiculo"}</h2>
             <p>{report?.clientName ?? "Cliente nao selecionado"}</p>
           </div>
-          <StatusPill status={report?.status ?? "Em execucao"} />
+          <div className="service-focus-actions">
+            <StatusPill status={report?.status ?? "Em execucao"} />
+            {report ? (
+              <button className="outline-button danger compact" type="button" onClick={() => void deleteReport()}>
+                <Trash2 size={16} />
+                Excluir
+              </button>
+            ) : null}
+          </div>
         </div>
         <div className="admin-form-grid">
           <label>
@@ -2301,6 +2400,7 @@ function ActiveServicesTable({
   orders: ServiceOrder[];
   reports: ServiceReport[];
 }) {
+  const { reload } = useAppData();
   const orderRows = orders
     .filter((order) => order.stage !== "completed" && order.status !== "Concluida")
     .map((order) => ({
@@ -2322,6 +2422,25 @@ function ActiveServicesTable({
     checkInAt: report.checkInAt,
   }));
   const rows = orderRows.length ? orderRows : reportRows;
+
+  async function deleteService(row: (typeof rows)[number]) {
+    const label = row.source === "order" ? row.vehicleLabel : `${row.vehicleLabel} - ${row.clientName}`;
+    if (!(await confirmDeleteAction("servico", label))) {
+      return;
+    }
+
+    try {
+      const response = await apiJson<DeleteResponse>(
+        row.source === "order" ? `/service-orders/${row.id}` : `/service-reports/${row.id}`,
+        { method: "DELETE" },
+      );
+      await reload();
+      await showSystemSuccess(response.detail);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao excluir servico.";
+      await showSystemError(message);
+    }
+  }
 
   return (
     <section className="active-services">
@@ -2345,34 +2464,42 @@ function ActiveServicesTable({
             <Wrench size={18} /> Etapa
           </span>
           <span>Status</span>
+          <span>Acoes</span>
         </div>
         <div className="services-body">
           {rows.map((report) => (
-            <button
-              aria-label={`Abrir servico ativo ${report.clientName} ${report.vehicleLabel}`}
-              className="services-row services-row-button"
-              key={report.id}
-              type="button"
-              onClick={() => {
-                if (report.source === "order") {
-                  onSelectOrder(report.id);
-                }
-              }}
-            >
-              <div>
-                <LogoChip label={report.vehicleLabel} />
-                <span>
-                  {report.vehicleLabel}
-                  <small>{new Date(report.checkInAt).getFullYear() || 2026}</small>
+            <div className="services-row-shell" key={`${report.source}-${report.id}`}>
+              <button
+                aria-label={`Abrir servico ativo ${report.clientName} ${report.vehicleLabel}`}
+                className="services-row services-row-button"
+                type="button"
+                onClick={() => {
+                  if (report.source === "order") {
+                    onSelectOrder(report.id);
+                  }
+                }}
+              >
+                <div>
+                  <LogoChip label={report.vehicleLabel} />
+                  <span>
+                    {report.vehicleLabel}
+                    <small>{new Date(report.checkInAt).getFullYear() || 2026}</small>
+                  </span>
+                </div>
+                <span>{report.clientName}</span>
+                <span className="stage-cell">
+                  <Wrench size={18} />
+                  {report.mechanic}
                 </span>
+                <StatusPill status={report.status} />
+              </button>
+              <div className="services-delete-cell">
+                <button className="outline-button danger compact" type="button" onClick={() => void deleteService(report)}>
+                  <Trash2 size={16} />
+                  Excluir
+                </button>
               </div>
-              <span>{report.clientName}</span>
-              <span className="stage-cell">
-                <Wrench size={18} />
-                {report.mechanic}
-              </span>
-              <StatusPill status={report.status} />
-            </button>
+            </div>
           ))}
         </div>
       </div>

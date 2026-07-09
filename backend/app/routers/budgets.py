@@ -40,6 +40,12 @@ def update_preset(preset_id: str, payload: BudgetPresetUpdate) -> BudgetPreset:
     return service.update_preset(preset_id, payload)
 
 
+@router.delete("/presets/{preset_id}", response_model=DeleteResponse)
+def delete_preset(preset_id: str) -> DeleteResponse:
+    service.delete_preset(preset_id)
+    return DeleteResponse(detail="Predefinicao removida com sucesso.")
+
+
 @router.get("/{budget_id}", response_model=Budget)
 def get_budget(budget_id: str) -> Budget:
     return service.get_budget(budget_id)
