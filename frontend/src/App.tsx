@@ -32,12 +32,20 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 import { useAppData } from "./context/AppDataContext";
 import { trackDbOperation, useDbLoading } from "./lib/dbLoading";
 import { buildBudgetWhatsappPreview, buildServiceReportSummary } from "./lib/exportTemplates";
+import {
+  findFipeBrand,
+  findFipeModel,
+  getFipeModelsForYearFuel,
+  getFipeYearFuelOptions,
+  loadFipeCatalog,
+  type FipeCatalog,
+} from "./lib/fipeCatalog";
 import { formatCurrency, formatDate, formatDateTime } from "./lib/formatters";
 import type { Budget, Client, FinancialEntry, Reminder, ServiceOrder, ServiceReport, ServiceTask, Vehicle } from "./types/domain";
 
@@ -63,6 +71,10 @@ type VehicleForm = {
   brand: string;
   model: string;
   year: string;
+  fipeBrandCode: string;
+  fipeModelCode: string;
+  fipeYearFuelValue: string;
+  fuelName: string;
   color: string;
   plate: string;
 };
@@ -118,12 +130,14 @@ type DiagnosisPrintData = {
 const serviceStatusOptions: ServiceTask["status"][] = ["Aguardando inicio", "Aguardando pecas", "Em andamento", "Concluido"];
 const paymentMethodOptions = ["PIX", "Dinheiro", "Crédito", "Débito"];
 
-const vehicleBrandOptions = ["Toyota", "Volkswagen", "Jeep", "Ford", "Chevrolet", "Mitsubishi", "Fiat", "Renault", "Hyundai", "Honda", "Outro"];
-
 const emptyVehicleForm = (): VehicleForm => ({
-  brand: "Toyota",
+  brand: "",
   model: "",
   year: String(new Date().getFullYear()),
+  fipeBrandCode: "",
+  fipeModelCode: "",
+  fipeYearFuelValue: "",
+  fuelName: "",
   color: "",
   plate: "",
 });
@@ -554,6 +568,126 @@ function GlobalDbLoading({ visible }: { visible: boolean }) {
   );
 }
 
+function FipeVehicleFormFields({
+  catalog,
+  catalogStatus,
+  index,
+  onBrandChange,
+  onFieldChange,
+  onModelChange,
+  onYearFuelChange,
+  vehicle,
+}: {
+  catalog: FipeCatalog | null;
+  catalogStatus: "idle" | "loading" | "ready" | "error";
+  index: number;
+  onBrandChange: (index: number, value: string) => void;
+  onFieldChange: (index: number, field: keyof VehicleForm, value: string) => void;
+  onModelChange: (index: number, value: string) => void;
+  onYearFuelChange: (index: number, value: string) => void;
+  vehicle: VehicleForm;
+}) {
+  const selectedBrand = findFipeBrand(catalog, vehicle.brand);
+  const yearFuelOptions = getFipeYearFuelOptions(selectedBrand);
+  const modelOptions = getFipeModelsForYearFuel(selectedBrand, vehicle.fipeYearFuelValue);
+  const brandListId = `fipe-brand-options-${index}`;
+  const modelListId = `fipe-model-options-${index}`;
+  const catalogLoading = catalogStatus === "loading";
+  const catalogUnavailable = catalogStatus === "error";
+
+  if (catalogUnavailable) {
+    return (
+      <div className="vehicle-catalog-form">
+        <div className="admin-form-grid vehicle-grid">
+          <label>
+            <span>Marca</span>
+            <input aria-label="Marca" placeholder="Toyota, Volkswagen, Ford..." value={vehicle.brand} onChange={(event) => onFieldChange(index, "brand", event.target.value)} />
+          </label>
+          <label>
+            <span>Ano</span>
+            <input aria-label="Ano" inputMode="numeric" placeholder="2021" value={vehicle.year} onChange={(event) => onFieldChange(index, "year", event.target.value)} />
+          </label>
+          <label>
+            <span>Modelo</span>
+            <input aria-label="Modelo" placeholder="Hilux, Amarok, Toro..." value={vehicle.model} onChange={(event) => onFieldChange(index, "model", event.target.value)} />
+          </label>
+          <label>
+            <span>Cor</span>
+            <input placeholder="Prata" value={vehicle.color} onChange={(event) => onFieldChange(index, "color", event.target.value)} />
+          </label>
+          <label>
+            <span>Placa</span>
+            <input placeholder="ABC1D23" value={vehicle.plate} onChange={(event) => onFieldChange(index, "plate", event.target.value.toUpperCase())} />
+          </label>
+        </div>
+        <div className="fipe-selection-meta">
+          <span>Catalogo FIPE indisponivel. Voce ainda pode digitar os dados do veiculo manualmente.</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="vehicle-catalog-form">
+      <div className="admin-form-grid vehicle-grid">
+        <label>
+          <span>Marca</span>
+          <input
+            aria-label="Marca"
+            disabled={catalogLoading}
+            list={brandListId}
+            placeholder={catalogLoading ? "Carregando catalogo..." : "Pesquise a marca"}
+            value={vehicle.brand}
+            onChange={(event) => onBrandChange(index, event.target.value)}
+          />
+          <datalist id={brandListId}>
+            {(catalog?.brands ?? []).map((brand) => <option key={brand.code} value={brand.name} />)}
+          </datalist>
+        </label>
+        <label>
+          <span>Ano / combustível</span>
+          <select
+            aria-label="Ano"
+            disabled={!selectedBrand || catalogLoading}
+            value={vehicle.fipeYearFuelValue}
+            onChange={(event) => onYearFuelChange(index, event.target.value)}
+          >
+            <option value="">{selectedBrand ? "Selecione ano e combustivel" : "Selecione a marca"}</option>
+            {yearFuelOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+        </label>
+        <label>
+          <span>Modelo</span>
+          <input
+            aria-label="Modelo"
+            disabled={!selectedBrand || catalogLoading}
+            list={modelListId}
+            placeholder={selectedBrand ? "Pesquise o modelo" : "Selecione a marca primeiro"}
+            value={vehicle.model}
+            onChange={(event) => onModelChange(index, event.target.value)}
+          />
+          <datalist id={modelListId}>
+            {modelOptions.map((model) => <option key={model.code} value={model.name} />)}
+          </datalist>
+        </label>
+        <label>
+          <span>Cor</span>
+          <input placeholder="Prata" value={vehicle.color} onChange={(event) => onFieldChange(index, "color", event.target.value)} />
+        </label>
+        <label>
+          <span>Placa</span>
+          <input placeholder="ABC1D23" value={vehicle.plate} onChange={(event) => onFieldChange(index, "plate", event.target.value.toUpperCase())} />
+        </label>
+      </div>
+      {catalogLoading ? (
+        <div className="fipe-selection-meta">
+          <span>Carregando base FIPE para selecao assistida...</span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function CustomerJourneyWorkspace({ clients, order }: { clients: Client[]; order?: ServiceOrder }) {
   const { reload } = useAppData();
   const [localOrder, setLocalOrder] = useState<ServiceOrder | undefined>(order);
@@ -568,6 +702,8 @@ function CustomerJourneyWorkspace({ clients, order }: { clients: Client[]; order
   const [newClientEmail, setNewClientEmail] = useState("");
   const [newClientCity, setNewClientCity] = useState("");
   const [vehicleForms, setVehicleForms] = useState<VehicleForm[]>([emptyVehicleForm()]);
+  const [fipeCatalog, setFipeCatalog] = useState<FipeCatalog | null>(null);
+  const [fipeCatalogStatus, setFipeCatalogStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [complaint, setComplaint] = useState(order?.diagnosis.customerComplaint ?? "");
   const [mechanicDiagnosis, setMechanicDiagnosis] = useState(order?.diagnosis.mechanicDiagnosis ?? "");
   const [diagnosisServices, setDiagnosisServices] = useState<DiagnosisServiceDraft[]>(
@@ -618,6 +754,30 @@ function CustomerJourneyWorkspace({ clients, order }: { clients: Client[]; order
     createdAt: "",
     updatedAt: "",
   };
+
+  useEffect(() => {
+    let shouldUpdate = true;
+
+    setFipeCatalogStatus("loading");
+    loadFipeCatalog()
+      .then((catalog) => {
+        if (!shouldUpdate) {
+          return;
+        }
+        setFipeCatalog(catalog);
+        setFipeCatalogStatus("ready");
+      })
+      .catch(() => {
+        if (!shouldUpdate) {
+          return;
+        }
+        setFipeCatalogStatus("error");
+      });
+
+    return () => {
+      shouldUpdate = false;
+    };
+  }, []);
 
   async function createClientFromForm() {
     setActionError(null);
@@ -693,6 +853,62 @@ function CustomerJourneyWorkspace({ clients, order }: { clients: Client[]; order
 
   function updateVehicleForm(index: number, field: keyof VehicleForm, value: string) {
     setVehicleForms((current) => current.map((vehicle, vehicleIndex) => (vehicleIndex === index ? { ...vehicle, [field]: value } : vehicle)));
+  }
+
+  function updateVehicleBrand(index: number, value: string) {
+    const selectedBrand = findFipeBrand(fipeCatalog, value);
+    setVehicleForms((current) => current.map((vehicle, vehicleIndex) => (
+      vehicleIndex === index
+        ? {
+          ...vehicle,
+          brand: selectedBrand?.name ?? value,
+          model: "",
+          year: String(new Date().getFullYear()),
+          fipeBrandCode: selectedBrand?.code ?? "",
+          fipeModelCode: "",
+          fipeYearFuelValue: "",
+          fuelName: "",
+        }
+        : vehicle
+    )));
+  }
+
+  function updateVehicleYearFuel(index: number, value: string) {
+    setVehicleForms((current) => current.map((vehicle, vehicleIndex) => {
+      if (vehicleIndex !== index) {
+        return vehicle;
+      }
+
+      const selectedBrand = findFipeBrand(fipeCatalog, vehicle.brand);
+      const selectedYearFuel = selectedBrand?.year_fuel_options.find((option) => option.value === value);
+
+      return {
+        ...vehicle,
+        model: "",
+        year: selectedYearFuel ? String(selectedYearFuel.year) : vehicle.year,
+        fipeModelCode: "",
+        fipeYearFuelValue: selectedYearFuel?.value ?? "",
+        fuelName: selectedYearFuel?.fuel.name ?? "",
+      };
+    }));
+  }
+
+  function updateVehicleModel(index: number, value: string) {
+    setVehicleForms((current) => current.map((vehicle, vehicleIndex) => {
+      if (vehicleIndex !== index) {
+        return vehicle;
+      }
+
+      const selectedBrand = findFipeBrand(fipeCatalog, vehicle.brand);
+      const models = getFipeModelsForYearFuel(selectedBrand, vehicle.fipeYearFuelValue);
+      const selectedModel = findFipeModel(models, value);
+
+      return {
+        ...vehicle,
+        model: selectedModel?.name ?? value,
+        fipeModelCode: selectedModel?.code ?? "",
+      };
+    }));
   }
 
   function addVehicleForm() {
@@ -1181,30 +1397,16 @@ function CustomerJourneyWorkspace({ clients, order }: { clients: Client[]; order
                 {vehicleForms.map((vehicle, index) => (
                   <fieldset className="vehicle-form-card" key={index}>
                     <legend>Veiculo {index + 1}</legend>
-                    <div className="admin-form-grid vehicle-grid">
-                      <label>
-                        <span>Marca</span>
-                        <select value={vehicle.brand} onChange={(event) => updateVehicleForm(index, "brand", event.target.value)}>
-                          {vehicleBrandOptions.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
-                        </select>
-                      </label>
-                      <label>
-                        <span>Modelo</span>
-                        <input placeholder="Hilux, Amarok, Toro..." value={vehicle.model} onChange={(event) => updateVehicleForm(index, "model", event.target.value)} />
-                      </label>
-                      <label>
-                        <span>Ano</span>
-                        <input inputMode="numeric" placeholder="2021" value={vehicle.year} onChange={(event) => updateVehicleForm(index, "year", event.target.value)} />
-                      </label>
-                      <label>
-                        <span>Cor</span>
-                        <input placeholder="Prata" value={vehicle.color} onChange={(event) => updateVehicleForm(index, "color", event.target.value)} />
-                      </label>
-                      <label>
-                        <span>Placa</span>
-                        <input placeholder="ABC1D23" value={vehicle.plate} onChange={(event) => updateVehicleForm(index, "plate", event.target.value.toUpperCase())} />
-                      </label>
-                    </div>
+                    <FipeVehicleFormFields
+                      catalog={fipeCatalog}
+                      catalogStatus={fipeCatalogStatus}
+                      index={index}
+                      onBrandChange={updateVehicleBrand}
+                      onFieldChange={updateVehicleForm}
+                      onModelChange={updateVehicleModel}
+                      onYearFuelChange={updateVehicleYearFuel}
+                      vehicle={vehicle}
+                    />
                     {vehicleForms.length > 1 ? (
                       <button className="outline-button danger compact" type="button" onClick={() => removeVehicleForm(index)}>
                         Remover veiculo
@@ -1982,8 +2184,135 @@ function ClientsWorkspace({ clients, serviceOrders }: { clients: Client[]; servi
   const { reload } = useAppData();
   const vehicles = clients.flatMap((client) => client.vehicles);
   const [historyClientId, setHistoryClientId] = useState<string | null>(null);
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientFormOpen, setClientFormOpen] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
+  const [newClientPhone, setNewClientPhone] = useState("");
+  const [newClientCpfCnpj, setNewClientCpfCnpj] = useState("");
+  const [newClientEmail, setNewClientEmail] = useState("");
+  const [newClientCity, setNewClientCity] = useState("");
+  const [vehicleForm, setVehicleForm] = useState<VehicleForm>(emptyVehicleForm());
+  const [clientActionMessage, setClientActionMessage] = useState<string | null>(null);
+  const [fipeCatalog, setFipeCatalog] = useState<FipeCatalog | null>(null);
+  const [fipeCatalogStatus, setFipeCatalogStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const historyClient = clients.find((client) => client.id === historyClientId);
   const clientHistory = serviceOrders.filter((order) => order.clientId === historyClientId || order.clientName === historyClient?.name);
+  const filteredClients = clients.filter((client) => clientMatchesSearch(client, clientSearch));
+
+  useEffect(() => {
+    let shouldUpdate = true;
+
+    setFipeCatalogStatus("loading");
+    loadFipeCatalog()
+      .then((catalog) => {
+        if (!shouldUpdate) {
+          return;
+        }
+        setFipeCatalog(catalog);
+        setFipeCatalogStatus("ready");
+      })
+      .catch(() => {
+        if (!shouldUpdate) {
+          return;
+        }
+        setFipeCatalogStatus("error");
+      });
+
+    return () => {
+      shouldUpdate = false;
+    };
+  }, []);
+
+  function updateClientVehicleField(_index: number, field: keyof VehicleForm, value: string) {
+    setVehicleForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function updateClientVehicleBrand(_index: number, value: string) {
+    const selectedBrand = findFipeBrand(fipeCatalog, value);
+    setVehicleForm((current) => ({
+      ...current,
+      brand: selectedBrand?.name ?? value,
+      model: "",
+      year: String(new Date().getFullYear()),
+      fipeBrandCode: selectedBrand?.code ?? "",
+      fipeModelCode: "",
+      fipeYearFuelValue: "",
+      fuelName: "",
+    }));
+  }
+
+  function updateClientVehicleYearFuel(_index: number, value: string) {
+    setVehicleForm((current) => {
+      const selectedBrand = findFipeBrand(fipeCatalog, current.brand);
+      const selectedYearFuel = selectedBrand?.year_fuel_options.find((option) => option.value === value);
+
+      return {
+        ...current,
+        model: "",
+        year: selectedYearFuel ? String(selectedYearFuel.year) : current.year,
+        fipeModelCode: "",
+        fipeYearFuelValue: selectedYearFuel?.value ?? "",
+        fuelName: selectedYearFuel?.fuel.name ?? "",
+      };
+    });
+  }
+
+  function updateClientVehicleModel(_index: number, value: string) {
+    setVehicleForm((current) => {
+      const selectedBrand = findFipeBrand(fipeCatalog, current.brand);
+      const models = getFipeModelsForYearFuel(selectedBrand, current.fipeYearFuelValue);
+      const selectedModel = findFipeModel(models, value);
+
+      return {
+        ...current,
+        model: selectedModel?.name ?? value,
+        fipeModelCode: selectedModel?.code ?? "",
+      };
+    });
+  }
+
+  function resetClientForm() {
+    setNewClientName("");
+    setNewClientPhone("");
+    setNewClientCpfCnpj("");
+    setNewClientEmail("");
+    setNewClientCity("");
+    setVehicleForm(emptyVehicleForm());
+  }
+
+  async function createClient() {
+    setClientActionMessage(null);
+    try {
+      await apiJson<any>("/clients", {
+        method: "POST",
+        body: JSON.stringify({
+          name: newClientName || "Cliente sem nome",
+          phone: newClientPhone || "(00) 00000-0000",
+          cpf_cnpj: newClientCpfCnpj,
+          email: newClientEmail || "cliente@autocar.example.com",
+          city: newClientCity || "Nao informado",
+          lifetime_value: 0,
+          vehicles: [{
+            brand: vehicleForm.brand || "Nao informado",
+            model: vehicleForm.model || "Modelo nao informado",
+            plate: vehicleForm.plate || `SEMPLACA${Date.now().toString().slice(-4)}`,
+            year: Number(vehicleForm.year) || new Date().getFullYear(),
+            color: vehicleForm.color || "",
+            mileage: 0,
+            status: "Em dia",
+          }],
+        }),
+      });
+      resetClientForm();
+      setClientFormOpen(false);
+      await reload();
+      await showSystemSuccess("Cliente cadastrado com sucesso.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao cadastrar cliente.";
+      setClientActionMessage(message);
+      await showSystemError(message);
+    }
+  }
 
   async function deleteClient(client: Client) {
     if (!(await confirmDeleteAction("cliente", client.name))) {
@@ -2017,9 +2346,71 @@ function ClientsWorkspace({ clients, serviceOrders }: { clients: Client[]; servi
         { label: "Historico", value: formatCurrency(clients.reduce((sum, client) => sum + client.lifetimeValue, 0)) },
       ]}
     >
-      {false ? (
       <PanelSection icon={Plus} title="Cadastro" description="Dados de contato, responsavel, veiculos e dados usados nos demais modulos.">
-        <div className="admin-form-grid two-columns">
+        <div className="panel-top">
+          <div className="search-field">
+            <span>Pesquisar cliente</span>
+            <input
+              aria-label="Pesquisar cliente"
+              placeholder="Nome, WhatsApp, veiculo ou placa"
+              value={clientSearch}
+              onChange={(event) => setClientSearch(event.target.value)}
+            />
+          </div>
+          <button className="outline-button blue" type="button" onClick={() => setClientFormOpen((current) => !current)}>
+            <Plus size={18} />
+            {clientFormOpen ? "Fechar cadastro" : "Cadastrar novo cliente"}
+          </button>
+        </div>
+        {clientFormOpen ? (
+          <div className="inline-modal">
+            <header>
+              <strong>Novo cliente</strong>
+              <button type="button" onClick={() => setClientFormOpen(false)}>Fechar</button>
+            </header>
+            <div className="admin-form-grid two-columns">
+              <label>
+                <span>Nome do cliente</span>
+                <input value={newClientName} onChange={(event) => setNewClientName(event.target.value)} placeholder="Nome completo" />
+              </label>
+              <label>
+                <span>WhatsApp</span>
+                <input value={newClientPhone} onChange={(event) => setNewClientPhone(event.target.value)} placeholder="(00) 00000-0000" />
+              </label>
+              <label>
+                <span>CPF / CNPJ</span>
+                <input aria-label="CPF / CNPJ" value={newClientCpfCnpj} onChange={(event) => setNewClientCpfCnpj(event.target.value)} placeholder="000.000.000-00" />
+              </label>
+              <label>
+                <span>Email</span>
+                <input value={newClientEmail} onChange={(event) => setNewClientEmail(event.target.value)} placeholder="cliente@email.com" />
+              </label>
+              <label>
+                <span>Cidade</span>
+                <input value={newClientCity} onChange={(event) => setNewClientCity(event.target.value)} placeholder="Cidade / UF" />
+              </label>
+            </div>
+            <fieldset className="vehicle-form-card">
+              <legend>Veiculo principal</legend>
+              <FipeVehicleFormFields
+                catalog={fipeCatalog}
+                catalogStatus={fipeCatalogStatus}
+                index={0}
+                onBrandChange={updateClientVehicleBrand}
+                onFieldChange={updateClientVehicleField}
+                onModelChange={updateClientVehicleModel}
+                onYearFuelChange={updateClientVehicleYearFuel}
+                vehicle={vehicleForm}
+              />
+            </fieldset>
+            <button className="save-button" type="button" onClick={() => void createClient()}>
+              <Save size={18} />
+              Salvar cliente
+            </button>
+          </div>
+        ) : null}
+        {clientActionMessage ? <p className="action-error">{clientActionMessage}</p> : null}
+        <div className="legacy-hidden">
           <label>
             <span>Nome do cliente</span>
             <input defaultValue={clients[0]?.name ?? ""} />
@@ -2038,11 +2429,9 @@ function ClientsWorkspace({ clients, serviceOrders }: { clients: Client[]; servi
           </label>
         </div>
       </PanelSection>
-      ) : null}
-
       <PanelSection icon={Eye} title="Visualizacao dos dados" description="Consulta por cliente, placa, status de revisao e valor historico.">
         <div className="client-admin-grid">
-          {clients.map((client) => (
+          {filteredClients.map((client) => (
             <article className="client-card" key={client.id}>
               <div>
                 <strong>{client.name}</strong>
@@ -2070,6 +2459,14 @@ function ClientsWorkspace({ clients, serviceOrders }: { clients: Client[]; servi
               </div>
             </article>
           ))}
+          {!filteredClients.length ? (
+            <article className="client-card">
+              <div>
+                <strong>Nenhum cliente encontrado</strong>
+                <span>Ajuste a busca ou cadastre um novo cliente.</span>
+              </div>
+            </article>
+          ) : null}
         </div>
         {historyClient ? (
           <div className="inline-modal">
@@ -2603,6 +3000,8 @@ function SettingsDock({
   onToggle: () => void;
   settingsOpen: boolean;
 }) {
+  const [updateSummaryOpen, setUpdateSummaryOpen] = useState(false);
+
   return (
     <aside className={settingsOpen ? "settings-dock settings-dock-open" : "settings-dock"}>
       <button className="settings-trigger" type="button" onClick={onToggle} aria-label="Configuracoes">
@@ -2626,6 +3025,44 @@ function SettingsDock({
             <span>Responsável tecnico</span>
             <input placeholder="Nome do responsavel" />
           </label>
+          <button className="settings-summary-button" type="button" onClick={() => setUpdateSummaryOpen(true)}>
+            <FileText size={16} />
+            Resumo da última atualização
+          </button>
+        </div>
+      ) : null}
+      {updateSummaryOpen ? (
+        <div className="settings-modal-backdrop" role="presentation" onClick={() => setUpdateSummaryOpen(false)}>
+          <section
+            aria-modal="true"
+            className="settings-update-modal"
+            role="dialog"
+            aria-labelledby="settings-update-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header>
+              <div>
+                <span>Notas da versão</span>
+                <h3 id="settings-update-title">Resumo da última atualização</h3>
+              </div>
+              <button type="button" onClick={() => setUpdateSummaryOpen(false)} aria-label="Fechar resumo da atualização">
+                Fechar
+              </button>
+            </header>
+            <div className="settings-update-content">
+              <p>
+                A jornada do cliente foi estruturada do início ao fim: seleção/cadastro de cliente,
+                diagnóstico, orçamento, checklist de serviços e pagamento.
+              </p>
+              <ul>
+                <li>Cadastro de clientes com múltiplos veículos, CPF/CNPJ e busca por placa, modelo ou nome.</li>
+                <li>Diagnóstico com lista de serviços identificados para alimentar o orçamento.</li>
+                <li>Orçamento por serviço com mão de obra, peças, pré-definições e exportação via WhatsApp/impressão.</li>
+                <li>Checklist com status, comentários, fotos e alerta ao avançar sem concluir tudo.</li>
+                <li>Pagamento final com recibo ou nota fiscal e remoção automática dos serviços concluídos da lista ativa.</li>
+              </ul>
+            </div>
+          </section>
         </div>
       ) : null}
     </aside>
